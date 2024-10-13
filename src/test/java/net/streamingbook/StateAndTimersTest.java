@@ -22,7 +22,7 @@ import static net.streamingbook.StateAndTimers.Impression;
 import static net.streamingbook.StateAndTimers.Visit;
 import static net.streamingbook.StateAndTimers.VisitOrImpression;
 
-import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.testing.PAssert;

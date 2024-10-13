@@ -25,14 +25,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-
 @RunWith(JUnit4.class)
 public class UtilsTest {
-    @Test
-    public void parseTimeTest() {
-	String time1 = "12:34:56";
-	Instant instant = parseTime(time1);
-	String time2 = formatTime(instant);
-	assertEquals(time1, time2);
-    }
+	@Test
+	public void parseTimeTest() {
+		String time1 = "12:34:56";
+		Instant instant = parseTime(time1);
+		String time2 = formatTime(instant);
+		assertEquals(time1, time2);
+	}
 }

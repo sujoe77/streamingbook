@@ -23,7 +23,7 @@ limitations under the License.
   <packaging>jar</packaging>
 
   <properties>
-    <beam.version>2.5.0</beam.version>
+    <beam.version>2.59.0</beam.version>
     <bigquery.version>v2-rev374-1.22.0</bigquery.version>
     <google-clients.version>1.22.0</google-clients.version>
     <guava.version>20.0</guava.version>
@@ -40,7 +40,7 @@ limitations under the License.
     <slf4j.version>1.7.25</slf4j.version>
     <spark.version>2.2.1</spark.version>
     <hadoop.version>2.7.3</hadoop.version>
-    <maven-surefire-plugin.version>2.20.1</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.1</maven-surefire-plugin.version>
   </properties>
 
   <repositories>
@@ -63,8 +63,8 @@ limitations under the License.
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
 
@@ -177,9 +177,9 @@ limitations under the License.
           can be removed when the project no longer has a dependency on a different httpclient version.
         -->
         <dependency>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-          <version>4.3.6</version>
+          <groupId>org.apache.httpcomponents.client5</groupId>
+          <artifactId>httpclient5</artifactId>
+          <version>5.4</version>
           <scope>runtime</scope>
           <exclusions>
             <exclusion>
