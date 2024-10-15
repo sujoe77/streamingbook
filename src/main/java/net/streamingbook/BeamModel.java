@@ -31,18 +31,18 @@ public class BeamModel {
     static final Duration TWO_MINUTES = Duration.standardMinutes(2);
 
     // Converts each Team/Score pair into a string with window and pane information,
-    // for verfying output in the unit tests.
+    // for verifying output in the unit tests.
     static class FormatAsStrings extends DoFn<KV<String, Integer>, String> {
         @ProcessElement
         public void processElement(@Element KV<String, Integer> kv,
-                                   @Timestamp Instant timestamp,
-                                   BoundedWindow window,
-                                   PaneInfo pane,
-                                   OutputReceiver<String> output) {
+                @Timestamp Instant timestamp,
+                BoundedWindow window,
+                PaneInfo pane,
+                OutputReceiver<String> output) {
             StringBuilder builder = new StringBuilder(String.format(
-                "%s: %s:%-2d %s %-7s index=%d",
-                Utils.formatWindow(window), kv.getKey(), kv.getValue(),
-                Utils.formatTime(timestamp), pane.getTiming(), pane.getIndex()));
+                    "%s: %s:%-2d %s %-7s index=%d",
+                    Utils.formatWindow(window), kv.getKey(), kv.getValue(),
+                    Utils.formatTime(timestamp), pane.getTiming(), pane.getIndex()));
             if (pane.getNonSpeculativeIndex() > -1)
                 builder.append(" onTimeIndex=" + pane.getNonSpeculativeIndex());
             if (pane.isFirst())
@@ -53,7 +53,8 @@ public class BeamModel {
         }
     }
 
-    public abstract static class ExampleTransform extends PTransform<PCollection<KV<String, Integer>>, PCollection<String>> {
+    public abstract static class ExampleTransform
+            extends PTransform<PCollection<KV<String, Integer>>, PCollection<String>> {
         public abstract String[] getExpectedResults();
     }
 
@@ -62,13 +63,14 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
-            return new String[] { "[global window]: TeamX:48 END_OF_GLOBAL_WINDOW ON_TIME index=0 onTimeIndex=0 isFirst isLast" };
+            return new String[] {
+                    "[global window]: TeamX:48 END_OF_GLOBAL_WINDOW ON_TIME index=0 onTimeIndex=0 isFirst isLast" };
         }
     }
 
@@ -77,17 +79,18 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES)))
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES)))
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
-            return new String[] { "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                                  "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                                  "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                                  "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast" };
+            return new String[] {
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast" };
         }
     }
 
@@ -96,26 +99,26 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-             .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
-                    .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(1)))
-                          .withAllowedLateness(Duration.standardDays(1000))
-                          .accumulatingFiredPanes())
-             .apply(Sum.integersPerKey())
-             .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
+                            .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(1)))
+                            .withAllowedLateness(Duration.standardDays(1000))
+                            .accumulatingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:14 12:01:59 EARLY   index=1",
-                "[12:02:00, 12:04:00): TeamX:7  12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=1",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=2",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:11 12:07:59 EARLY   index=1",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 EARLY   index=2"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 EARLY   index=1",
+                    "[12:02:00, 12:04:00): TeamX:7  12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=1",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=2",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:11 12:07:59 EARLY   index=1",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 EARLY   index=2"
             };
         }
     }
@@ -125,31 +128,34 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
-                       .triggering(Repeatedly.forever(AfterProcessingTime
-                                                      .pastFirstElementInPane()
-                                                      .alignedTo(TWO_MINUTES, Utils.parseTime("12:05:00"))))
-                       .withAllowedLateness(Duration.standardDays(1000))
-                       .accumulatingFiredPanes())
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
+                            .triggering(Repeatedly.forever(AfterProcessingTime
+                                    .pastFirstElementInPane()
+                                    .alignedTo(TWO_MINUTES, Utils.parseTime("12:05:00"))))
+                            .withAllowedLateness(Duration.standardDays(1000))
+                            .accumulatingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
-        // These panes are kind of funky relative to what's presented in the book, and I'm
-        // not 100% sure why yet (it would help if Beam gave access to the processing time
-        // at which a given pane was materialized). For now, I wouldn't pay too much attention
+        // These panes are kind of funky relative to what's presented in the book, and
+        // I'm
+        // not 100% sure why yet (it would help if Beam gave access to the processing
+        // time
+        // at which a given pane was materialized). For now, I wouldn't pay too much
+        // attention
         // to this one. :-)
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=1 onTimeIndex=0 isLast",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0 isLast",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0 isLast",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0 isLast"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=1 onTimeIndex=0 isLast",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0 isLast",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0 isLast",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0 isLast"
             };
         }
     }
@@ -159,25 +165,26 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
-                       .triggering(Repeatedly.forever(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(TWO_MINUTES)))
-                       .withAllowedLateness(Duration.standardDays(1000))
-                       .accumulatingFiredPanes())
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
+                            .triggering(Repeatedly
+                                    .forever(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(TWO_MINUTES)))
+                            .withAllowedLateness(Duration.standardDays(1000))
+                            .accumulatingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=1 onTimeIndex=0 isLast",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0 isLast",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0 isLast",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0 isLast"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=1 onTimeIndex=0 isLast",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0 isLast",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0 isLast",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0 isLast"
             };
         }
     }
@@ -186,34 +193,36 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES)))
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES)))
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
     }
 
-    // Example 2-6 / Figure 2-10 (left side): Watermark trigger with perfect watermark.
+    // Example 2-6 / Figure 2-10 (left side): Watermark trigger with perfect
+    // watermark.
     public static class Example2_6left extends Example2_6 {
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast"
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast"
             };
         }
     }
 
-    // Example 2-6 / Figure 2-10 (right side): Watermark trigger with heuristic watermark.
+    // Example 2-6 / Figure 2-10 (right side): Watermark trigger with heuristic
+    // watermark.
     public static class Example2_6right extends Example2_6 {
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=0 onTimeIndex=0 isFirst isLast"
             };
         }
     }
@@ -222,55 +231,62 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
-                       .triggering(AfterWatermark.pastEndOfWindow()
-                                   .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
-                                   .withLateFirings(AfterPane.elementCountAtLeast(1)))
-                       .withAllowedLateness(Duration.standardDays(1000))
-                       .accumulatingFiredPanes())
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
+                            .triggering(AfterWatermark.pastEndOfWindow()
+                                    .withEarlyFirings(
+                                            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
+                                    .withLateFirings(AfterPane.elementCountAtLeast(1)))
+                            .withAllowedLateness(Duration.standardDays(1000))
+                            .accumulatingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
     }
 
-    // Example 2-7 / Figure 2-11 (left side): Early/on-time/late trigger with perfect watermark.
+    // Example 2-7 / Figure 2-11 (left side): Early/on-time/late trigger with
+    // perfect watermark.
     public static class Example2_7left extends Example2_7 {
         @Override
         public String[] getExpectedResults() {
-            // Note the lack of "isLast" markers, which is an indication that the perfect watermark is what
-            // is triggering the ON_TIME panes, and not the final advancement of the watermark to infinity
+            // Note the lack of "isLast" markers, which is an indication that the perfect
+            // watermark is what
+            // is triggering the ON_TIME panes, and not the final advancement of the
+            // watermark to infinity
             // (which would also mark the pane as last).
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=1",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=2 onTimeIndex=0",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 EARLY   index=1",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=2 onTimeIndex=0",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0"
             };
         }
     }
 
-    // Example 2-7 / Figure 2-11 (right side): Early/on-time/late trigger with perfect watermark.
+    // Example 2-7 / Figure 2-11 (right side): Early/on-time/late trigger with
+    // perfect watermark.
     public static class Example2_7right extends Example2_7 {
         @Override
         public String[] getExpectedResults() {
-            // Note the lack of "isLast" markers, which is an indication that the perfect watermark is what
-            // is triggering the ON_TIME panes, and not the final advancement of the watermark to infinity
+            // Note the lack of "isLast" markers, which is an indication that the perfect
+            // watermark is what
+            // is triggering the ON_TIME panes, and not the final advancement of the
+            // watermark to infinity
             // (which would also mark the pane as last).
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:00:00, 12:02:00): TeamX:14 12:01:59 LATE    index=2 onTimeIndex=1",
-                "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:00:00, 12:02:00): TeamX:14 12:01:59 LATE    index=2 onTimeIndex=1",
+                    "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0"
             };
         }
     }
@@ -280,59 +296,62 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
-                       .triggering(AfterWatermark.pastEndOfWindow()
-                                   .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
-                                   .withLateFirings(AfterPane.elementCountAtLeast(1)))
-                       .withAllowedLateness(TWO_MINUTES)
-                       .accumulatingFiredPanes())
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
+                            .triggering(AfterWatermark.pastEndOfWindow()
+                                    .withEarlyFirings(
+                                            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
+                                    .withLateFirings(AfterPane.elementCountAtLeast(1)))
+                            .withAllowedLateness(TWO_MINUTES)
+                            .accumulatingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:00:00, 12:02:00): TeamX:11 12:01:59 LATE    index=2 onTimeIndex=1",
-                "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:00:00, 12:02:00): TeamX:11 12:01:59 LATE    index=2 onTimeIndex=1",
+                    "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:18 12:03:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:12 12:07:59 ON_TIME index=1 onTimeIndex=0"
             };
         }
     }
 
-    // Example 2-9 / Figure 2-13: Discarding mode version of early/on-time/late trigger with heuristic watermark.
+    // Example 2-9 / Figure 2-13: Discarding mode version of early/on-time/late
+    // trigger with heuristic watermark.
     public static class Example2_9 extends ExampleTransform {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
-                       .triggering(AfterWatermark.pastEndOfWindow()
-                                   .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
-                                   .withLateFirings(AfterPane.elementCountAtLeast(1)))
-                       .withAllowedLateness(Duration.standardDays(1000))
-                       .discardingFiredPanes())
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(FixedWindows.of(TWO_MINUTES))
+                            .triggering(AfterWatermark.pastEndOfWindow()
+                                    .withEarlyFirings(
+                                            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
+                                    .withLateFirings(AfterPane.elementCountAtLeast(1)))
+                            .withAllowedLateness(Duration.standardDays(1000))
+                            .discardingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
-                "[12:00:00, 12:02:00): TeamX:0  12:01:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:00:00, 12:02:00): TeamX:9  12:01:59 LATE    index=2 onTimeIndex=1",
-                "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
-                "[12:02:00, 12:04:00): TeamX:8  12:03:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
-                "[12:04:00, 12:06:00): TeamX:0  12:05:59 ON_TIME index=1 onTimeIndex=0",
-                "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
-                "[12:06:00, 12:08:00): TeamX:9  12:07:59 ON_TIME index=1 onTimeIndex=0"
+                    "[12:00:00, 12:02:00): TeamX:5  12:01:59 EARLY   index=0 isFirst",
+                    "[12:00:00, 12:02:00): TeamX:0  12:01:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:00:00, 12:02:00): TeamX:9  12:01:59 LATE    index=2 onTimeIndex=1",
+                    "[12:02:00, 12:04:00): TeamX:10 12:03:59 EARLY   index=0 isFirst",
+                    "[12:02:00, 12:04:00): TeamX:8  12:03:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:04:00, 12:06:00): TeamX:4  12:05:59 EARLY   index=0 isFirst",
+                    "[12:04:00, 12:06:00): TeamX:0  12:05:59 ON_TIME index=1 onTimeIndex=0",
+                    "[12:06:00, 12:08:00): TeamX:3  12:07:59 EARLY   index=0 isFirst",
+                    "[12:06:00, 12:08:00): TeamX:9  12:07:59 ON_TIME index=1 onTimeIndex=0"
             };
         }
     }
@@ -342,58 +361,63 @@ public class BeamModel {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.<KV<String, Integer>>into(Sessions.withGapDuration(ONE_MINUTE))
-                       .triggering(AfterWatermark.pastEndOfWindow()
-                                   .withEarlyFirings(AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
-                                   .withLateFirings(AfterPane.elementCountAtLeast(1)))
-                       .withAllowedLateness(Duration.standardDays(1000))
-                       .accumulatingFiredPanes())
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.<KV<String, Integer>>into(Sessions.withGapDuration(ONE_MINUTE))
+                            .triggering(AfterWatermark.pastEndOfWindow()
+                                    .withEarlyFirings(
+                                            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(ONE_MINUTE))
+                                    .withLateFirings(AfterPane.elementCountAtLeast(1)))
+                            .withAllowedLateness(Duration.standardDays(1000))
+                            .accumulatingFiredPanes())
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:26, 12:01:26): TeamX:5  12:01:25 EARLY   index=0 isFirst",
-                "[12:00:26, 12:01:26): TeamX:5  12:01:25 ON_TIME index=1 onTimeIndex=0",
-                "[12:02:24, 12:03:24): TeamX:7  12:03:23 EARLY   index=0 isFirst",
-                "[12:02:24, 12:05:19): TeamX:22 12:05:18 EARLY   index=0 isFirst",
-                "[12:02:24, 12:05:19): TeamX:22 12:05:18 ON_TIME index=1 onTimeIndex=0",
-                "[12:00:26, 12:05:19): TeamX:36 12:05:18 LATE    index=0 onTimeIndex=0 isFirst",
-                "[12:06:39, 12:07:39): TeamX:3  12:07:38 EARLY   index=0 isFirst",
-                "[12:06:39, 12:08:46): TeamX:12 12:08:45 EARLY   index=0 isFirst",
-		"[12:06:39, 12:08:46): TeamX:12 12:08:45 ON_TIME index=1 onTimeIndex=0 isLast"
+                    "[12:00:26, 12:01:26): TeamX:5  12:01:25 EARLY   index=0 isFirst",
+                    "[12:00:26, 12:01:26): TeamX:5  12:01:25 ON_TIME index=1 onTimeIndex=0",
+                    "[12:02:24, 12:03:24): TeamX:7  12:03:23 EARLY   index=0 isFirst",
+                    "[12:02:24, 12:05:19): TeamX:22 12:05:18 EARLY   index=0 isFirst",
+                    "[12:02:24, 12:05:19): TeamX:22 12:05:18 ON_TIME index=1 onTimeIndex=0",
+                    "[12:00:26, 12:05:19): TeamX:36 12:05:18 LATE    index=0 onTimeIndex=0 isFirst",
+                    "[12:06:39, 12:07:39): TeamX:3  12:07:38 EARLY   index=0 isFirst",
+                    "[12:06:39, 12:08:46): TeamX:12 12:08:45 EARLY   index=0 isFirst",
+                    "[12:06:39, 12:08:46): TeamX:12 12:08:45 ON_TIME index=1 onTimeIndex=0 isLast"
             };
         }
     }
 
-    // Verifies that the ValidityWindows implementation works. This specific example isn't
-    // in the book, it's just sending the same input set as all of the above tests through
-    // the ValidityWindows transform and verifying that each element ends up in a window
-    // that extends from its original event time until the event time of the next successive
+    // Verifies that the ValidityWindows implementation works. This specific example
+    // isn't
+    // in the book, it's just sending the same input set as all of the above tests
+    // through
+    // the ValidityWindows transform and verifying that each element ends up in a
+    // window
+    // that extends from its original event time until the event time of the next
+    // successive
     // element.
     public static class ValidityWindowsTest extends ExampleTransform {
         @Override
         public PCollection<String> expand(PCollection<KV<String, Integer>> input) {
             return input
-                .apply(Window.into(new ValidityWindows()))
-                .apply(Sum.integersPerKey())
-                .apply(ParDo.of(new FormatAsStrings()));
+                    .apply(Window.into(new ValidityWindows()))
+                    .apply(Sum.integersPerKey())
+                    .apply(ParDo.of(new FormatAsStrings()));
         }
 
         @Override
         public String[] getExpectedResults() {
             return new String[] {
-                "[12:00:26, 12:01:25): TeamX:5  12:01:24 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:01:25, 12:02:24): TeamX:9  12:02:23 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:02:24, 12:03:06): TeamX:7  12:03:05 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:03:06, 12:03:39): TeamX:8  12:03:38 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:03:39, 12:04:19): TeamX:3  12:04:18 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:04:19, 12:06:39): TeamX:4  12:06:38 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:06:39, 12:07:26): TeamX:3  12:07:25 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:07:26, 12:07:46): TeamX:8  12:07:45 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
-                "[12:07:46, END_OF_GLOBAL_WINDOW): TeamX:1  04:00:54 ON_TIME index=0 onTimeIndex=0 isFirst isLast"
+                    "[12:00:26, 12:01:25): TeamX:5  12:01:24 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:01:25, 12:02:24): TeamX:9  12:02:23 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:02:24, 12:03:06): TeamX:7  12:03:05 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:03:06, 12:03:39): TeamX:8  12:03:38 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:03:39, 12:04:19): TeamX:3  12:04:18 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:04:19, 12:06:39): TeamX:4  12:06:38 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:06:39, 12:07:26): TeamX:3  12:07:25 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:07:26, 12:07:46): TeamX:8  12:07:45 ON_TIME index=0 onTimeIndex=0 isFirst isLast",
+                    "[12:07:46, END_OF_GLOBAL_WINDOW): TeamX:1  04:00:54 ON_TIME index=0 onTimeIndex=0 isFirst isLast"
             };
         }
     }
