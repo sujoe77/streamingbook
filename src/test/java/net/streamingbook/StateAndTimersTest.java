@@ -16,15 +16,9 @@
 
 package net.streamingbook;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static net.streamingbook.StateAndTimers.Attribution;
-import static net.streamingbook.StateAndTimers.Impression;
-import static net.streamingbook.StateAndTimers.Visit;
-import static net.streamingbook.StateAndTimers.VisitOrImpression;
-
-import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.testing.TestStream;
@@ -36,6 +30,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static net.streamingbook.StateAndTimers.*;
 
 @RunWith(JUnit4.class)
 public class StateAndTimersTest {
